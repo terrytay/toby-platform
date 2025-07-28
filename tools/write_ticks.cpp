@@ -4,6 +4,16 @@
 #include <ctime>
 #include <string>
 #include <filesystem>
+#include <vector>
+
+TickEvent generateTick(size_t i) {
+    TickEvent tick;
+    tick.timestamp_ns = 1650000000000000000ULL + i * 1000;
+    tick.price = 4200.0 + (std::rand() % 100) / 10.0;
+    tick.size = (std::rand() % 5) + 1;
+    tick.type = (std::rand() & 3);
+    return tick;
+}
 
 int main() {
     std::string path = std::filesystem::absolute("../../data/mock_ticks.bin").string();
@@ -13,19 +23,28 @@ int main() {
         return 1;
     }
 
-    std::srand(std::time(nullptr));
+    const size_t total = 10'000'000;
+    std::vector<TickEvent> buffer;
+    buffer.reserve(10000);
 
-    for (int i = 0; i < 100000; ++i) {
-        TickEvent tick;
-        tick.timestamp_ns = 1650000000000000000ULL + i * 1000; // fake ns ts
-        tick.price = 4200.0 + (std::rand() % 100) / 10.0;
-        tick.size = (std::rand() % 5) + 1;
-        tick.type = (std::rand() % 3);
+    for (size_t i = 0; i < total; ++i) {
+        buffer.push_back(generateTick(i));
 
-        std::fwrite(&tick, sizeof(TickEvent), 1, out);
+        if (buffer.size() == 10000) {
+            std::fwrite(buffer.data(), sizeof(TickEvent), buffer.size(), out);
+            buffer.clear();
+        }
+
+        if (i % 1000000 == 0) {
+            std::printf("Progress: %lu / %lu\n", i, total);
+        }
     }
 
+    if (!buffer.empty()) {
+        std::fwrite(buffer.data(), sizeof(TickEvent), buffer.size(), out);
+    } 
+
     std::fclose(out);
-    printf("Wrote 100,000 fake ticks to data/mock_ticks.bin\n");
+    std::puts("Done writing 10 million ticks!");
     return 0;
 }

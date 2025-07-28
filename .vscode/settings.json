@@ -4,6 +4,7 @@
     "cstdio": "cpp",
     "functional": "cpp",
     "xstring": "cpp",
-    "chrono": "cpp"
+    "chrono": "cpp",
+    "vector": "cpp"
   }
 }
