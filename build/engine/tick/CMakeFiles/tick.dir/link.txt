@@ -1,2 +1,0 @@
-/usr/bin/ar qc libtick.a CMakeFiles/tick.dir/TickReplayer.cpp.o
-/usr/bin/ranlib libtick.a

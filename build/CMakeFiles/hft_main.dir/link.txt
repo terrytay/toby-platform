@@ -1,1 +1,0 @@
-/usr/bin/c++  -O3 -march=native CMakeFiles/hft_main.dir/engine/main.cpp.o -o hft_main  engine/tick/libtick.a 
