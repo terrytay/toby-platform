@@ -8,3 +8,6 @@ add_subdirectory(engine/tick)
 
 add_executable(hft_main engine/main.cpp)
 target_link_libraries(hft_main PRIVATE tick)
+
+add_executable(test_min engine/orderbook/test_min.cpp)
+target_include_directories(test_min PRIVATE engine)

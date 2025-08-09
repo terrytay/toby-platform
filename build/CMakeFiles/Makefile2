@@ -64,6 +64,7 @@ CMAKE_BINARY_DIR = /mnt/c/Users/txrry/Desktop/toby-platform/build
 
 # The main recursive "all" target.
 all: CMakeFiles/hft_main.dir/all
+all: CMakeFiles/test_min.dir/all
 all: engine/tick/all
 .PHONY : all
 
@@ -73,6 +74,7 @@ preinstall: engine/tick/preinstall
 
 # The main recursive "clean" target.
 clean: CMakeFiles/hft_main.dir/clean
+clean: CMakeFiles/test_min.dir/clean
 clean: engine/tick/clean
 .PHONY : clean
 
@@ -118,13 +120,39 @@ CMakeFiles/hft_main.dir/clean:
 .PHONY : CMakeFiles/hft_main.dir/clean
 
 #=============================================================================
+# Target rules for target CMakeFiles/test_min.dir
+
+# All Build rule for target.
+CMakeFiles/test_min.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_min.dir/build.make CMakeFiles/test_min.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_min.dir/build.make CMakeFiles/test_min.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/mnt/c/Users/txrry/Desktop/toby-platform/build/CMakeFiles --progress-num=3,4 "Built target test_min"
+.PHONY : CMakeFiles/test_min.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/test_min.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/c/Users/txrry/Desktop/toby-platform/build/CMakeFiles 2
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/test_min.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/c/Users/txrry/Desktop/toby-platform/build/CMakeFiles 0
+.PHONY : CMakeFiles/test_min.dir/rule
+
+# Convenience name for target.
+test_min: CMakeFiles/test_min.dir/rule
+.PHONY : test_min
+
+# clean rule for target.
+CMakeFiles/test_min.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_min.dir/build.make CMakeFiles/test_min.dir/clean
+.PHONY : CMakeFiles/test_min.dir/clean
+
+#=============================================================================
 # Target rules for target engine/tick/CMakeFiles/tick.dir
 
 # All Build rule for target.
 engine/tick/CMakeFiles/tick.dir/all:
 	$(MAKE) $(MAKESILENT) -f engine/tick/CMakeFiles/tick.dir/build.make engine/tick/CMakeFiles/tick.dir/depend
 	$(MAKE) $(MAKESILENT) -f engine/tick/CMakeFiles/tick.dir/build.make engine/tick/CMakeFiles/tick.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/mnt/c/Users/txrry/Desktop/toby-platform/build/CMakeFiles --progress-num=3,4 "Built target tick"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/mnt/c/Users/txrry/Desktop/toby-platform/build/CMakeFiles --progress-num=5,6 "Built target tick"
 .PHONY : engine/tick/CMakeFiles/tick.dir/all
 
 # Build rule for subdir invocation for target.

@@ -130,6 +130,19 @@ hft_main/fast:
 .PHONY : hft_main/fast
 
 #=============================================================================
+# Target rules for targets named test_min
+
+# Build rule for target.
+test_min: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_min
+.PHONY : test_min
+
+# fast build rule for target.
+test_min/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_min.dir/build.make CMakeFiles/test_min.dir/build
+.PHONY : test_min/fast
+
+#=============================================================================
 # Target rules for targets named tick
 
 # Build rule for target.
@@ -166,6 +179,30 @@ engine/main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/hft_main.dir/build.make CMakeFiles/hft_main.dir/engine/main.cpp.s
 .PHONY : engine/main.cpp.s
 
+engine/orderbook/test_min.o: engine/orderbook/test_min.cpp.o
+.PHONY : engine/orderbook/test_min.o
+
+# target to build an object file
+engine/orderbook/test_min.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_min.dir/build.make CMakeFiles/test_min.dir/engine/orderbook/test_min.cpp.o
+.PHONY : engine/orderbook/test_min.cpp.o
+
+engine/orderbook/test_min.i: engine/orderbook/test_min.cpp.i
+.PHONY : engine/orderbook/test_min.i
+
+# target to preprocess a source file
+engine/orderbook/test_min.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_min.dir/build.make CMakeFiles/test_min.dir/engine/orderbook/test_min.cpp.i
+.PHONY : engine/orderbook/test_min.cpp.i
+
+engine/orderbook/test_min.s: engine/orderbook/test_min.cpp.s
+.PHONY : engine/orderbook/test_min.s
+
+# target to generate assembly for a file
+engine/orderbook/test_min.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_min.dir/build.make CMakeFiles/test_min.dir/engine/orderbook/test_min.cpp.s
+.PHONY : engine/orderbook/test_min.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -175,10 +212,14 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... hft_main"
+	@echo "... test_min"
 	@echo "... tick"
 	@echo "... engine/main.o"
 	@echo "... engine/main.i"
 	@echo "... engine/main.s"
+	@echo "... engine/orderbook/test_min.o"
+	@echo "... engine/orderbook/test_min.i"
+	@echo "... engine/orderbook/test_min.s"
 .PHONY : help
 
 
