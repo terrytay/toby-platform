@@ -11,3 +11,6 @@ target_link_libraries(hft_main PRIVATE tick)
 
 add_executable(test_min engine/orderbook/test_min.cpp)
 target_include_directories(test_min PRIVATE engine)
+
+add_executable(test_best engine/orderbook/test_best.cpp)
+target_include_directories(test_best PRIVATE engine)

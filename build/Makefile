@@ -143,6 +143,19 @@ test_min/fast:
 .PHONY : test_min/fast
 
 #=============================================================================
+# Target rules for targets named test_best
+
+# Build rule for target.
+test_best: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_best
+.PHONY : test_best
+
+# fast build rule for target.
+test_best/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_best.dir/build.make CMakeFiles/test_best.dir/build
+.PHONY : test_best/fast
+
+#=============================================================================
 # Target rules for targets named tick
 
 # Build rule for target.
@@ -179,6 +192,30 @@ engine/main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/hft_main.dir/build.make CMakeFiles/hft_main.dir/engine/main.cpp.s
 .PHONY : engine/main.cpp.s
 
+engine/orderbook/test_best.o: engine/orderbook/test_best.cpp.o
+.PHONY : engine/orderbook/test_best.o
+
+# target to build an object file
+engine/orderbook/test_best.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_best.dir/build.make CMakeFiles/test_best.dir/engine/orderbook/test_best.cpp.o
+.PHONY : engine/orderbook/test_best.cpp.o
+
+engine/orderbook/test_best.i: engine/orderbook/test_best.cpp.i
+.PHONY : engine/orderbook/test_best.i
+
+# target to preprocess a source file
+engine/orderbook/test_best.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_best.dir/build.make CMakeFiles/test_best.dir/engine/orderbook/test_best.cpp.i
+.PHONY : engine/orderbook/test_best.cpp.i
+
+engine/orderbook/test_best.s: engine/orderbook/test_best.cpp.s
+.PHONY : engine/orderbook/test_best.s
+
+# target to generate assembly for a file
+engine/orderbook/test_best.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_best.dir/build.make CMakeFiles/test_best.dir/engine/orderbook/test_best.cpp.s
+.PHONY : engine/orderbook/test_best.cpp.s
+
 engine/orderbook/test_min.o: engine/orderbook/test_min.cpp.o
 .PHONY : engine/orderbook/test_min.o
 
@@ -212,11 +249,15 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... hft_main"
+	@echo "... test_best"
 	@echo "... test_min"
 	@echo "... tick"
 	@echo "... engine/main.o"
 	@echo "... engine/main.i"
 	@echo "... engine/main.s"
+	@echo "... engine/orderbook/test_best.o"
+	@echo "... engine/orderbook/test_best.i"
+	@echo "... engine/orderbook/test_best.s"
 	@echo "... engine/orderbook/test_min.o"
 	@echo "... engine/orderbook/test_min.i"
 	@echo "... engine/orderbook/test_min.s"

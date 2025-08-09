@@ -43,5 +43,6 @@ set(CMAKE_MAKEFILE_PRODUCTS
 set(CMAKE_DEPEND_INFO_FILES
   "CMakeFiles/hft_main.dir/DependInfo.cmake"
   "CMakeFiles/test_min.dir/DependInfo.cmake"
+  "CMakeFiles/test_best.dir/DependInfo.cmake"
   "engine/tick/CMakeFiles/tick.dir/DependInfo.cmake"
   )

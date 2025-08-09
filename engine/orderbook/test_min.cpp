@@ -5,7 +5,7 @@
 int main() {
     long long center_tick = price_to_ticks(18000.00);
     OrderBook ob(10, center_tick, 3);
-    
+
     ob.add(BID, 18000.00, 5, 1001);
 
     ob.add(BID, 17999.75, 7, 1002);

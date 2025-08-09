@@ -27,7 +27,9 @@ struct OrderBook {
     OrderPool pool;
     OrderIndex<> loc; // order_id -> {side, idx, node, prev}
 
-    OrderBook(int half_span, long long center_tick, size_t max_orders) : pool(max_orders) { // initialise pool before body of constructor runs
+    int best_idx[2] = {-1, -1}; // [BID], [ASK]
+
+     OrderBook(int half_span, long long center_tick, size_t max_orders) : pool(max_orders) { // initialise pool before body of constructor runs
         for (int s = 0; s < 2; ++s) {
             side[s].center_tick = center_tick;
             side[s].half_span = half_span;
@@ -38,9 +40,60 @@ struct OrderBook {
 
     // TODO: real recenter; for now assuming in range
     inline void ensure_index_in_range(uint8_t s, int& idx) {
-        (void)s; (void)idx;
+        if (side[s].in_range(idx)) return;
     }
 
+    inline void on_level_become_nonempty(uint8_t s, int idx) {
+        if (best_idx[s] == -1) {best_idx[s] = idx; return;}
+
+        if (s == BID) {
+            if (idx > best_idx[s]) best_idx[s] = idx;
+        } else { // s == ASK
+            if (idx < best_idx[s]) best_idx[s] = idx;
+        }
+    }
+
+    inline void on_level_maybe_empty(uint8_t s, int idx) {
+        Level& L = side[s].levels[idx];
+        if (L.head != -1) return; // still has order(s) on this 
+        if (best_idx[s] != idx) return; // not best anymore or wasn't best
+
+        // advance to next best
+        if (s == BID) {
+            // move downwards until non-empty
+            for (int i = idx - 1; i>=0; --i) {
+                if (side[s].levels[i].head != -1) {
+                    best_idx[s] = i; // found a non-empty level, set and return
+                    return;
+                }
+            }
+            best_idx[s] = -1; // none
+        } else {
+            for (int i = idx + 1; i < (int)side[s].levels.size(); ++i) {
+                if (side[s].levels[i].head != -1) {
+                    best_idx[s] = i;
+                    return;
+                }
+            }
+        }
+    }
+    
+    inline void maybe_promote_best(uint8_t s, int idx) {
+        // called after add() to see if this price improve best
+        if (best_idx[s] == -1) {
+            best_idx[s] = idx;
+            return;
+        }
+
+        if (s == BID) {
+            if (idx > best_idx[s]) best_idx[s] = idx;
+        } else {
+            if (idx < best_idx[s]) best_idx[s] = idx;
+        }
+    }
+
+
+    /* Public API */
     void add(uint8_t s, double price, uint32_t qty, uint64_t oid) {
         long long t = price_to_ticks(price);
         int idx = side[s].idx_from_tick(t);
@@ -54,7 +107,11 @@ struct OrderBook {
         node.next = -1;
 
         int32_t prev = L.tail;
-        if (prev == -1) L.head = L.tail = n;
+        if (prev == -1) {
+            L.head = L.tail = n;
+            on_level_become_nonempty(s, idx);
+            maybe_promote_best(s, idx);
+        }
         else { pool.nodes[prev].next = n; L.tail = n;}
 
         L.agg_qty += qty;
@@ -80,6 +137,70 @@ struct OrderBook {
 
         pool.release(ol.node);
         loc.erase(it);
+
+        if (L.head == -1) on_level_maybe_empty(ol.side, ol.idx);
         return true;
+    }
+    
+    // Best-of-book queries (O(1) if best_idx is set)
+    bool best_bid(double& price_out, uint32_t& qty_out) const {
+        int i = best_idx[BID];
+        if (i < 0) return false;
+        const Level& L = side[BID].levels[i];
+        price_out = (side[BID].center_tick + i - side[BID].half_span) / 4.0; // ticks -> price
+        qty_out = L.agg_qty;
+        
+        return true;
+    }
+
+    bool best_ask(double& price_out, uint32_t& qty_out) const {
+        int i = best_idx[ASK];
+        if (i < 0) return false;
+        const Level& L = side[ASK].levels[i];
+        price_out = (side[ASK].center_tick + i - side[ASK].half_span) / 4.0;
+        qty_out = L.agg_qty;
+        return true;
+    }
+
+    // Consume from best (market order impact). Side=BUY lifts ASK; Side=SELL hits BID.
+    // Returns filled quantity.
+
+    uint32_t trade_at_best(uint32_t taker_side, uint32_t want_qty) {
+        uint8_t book_side = (taker_side == BID ? ASK : BID);
+        uint32_t filled = 0;
+
+        while (want_qty > 0) {
+            int i = best_idx[book_side];
+            if (i < 0) break; // no liquidity
+            Level& L = side[book_side].levels[i];
+
+            // pop or partial-fill from head
+            int32_t n = L.head;
+            if (n == -1) {
+                on_level_maybe_empty(book_side, i);
+                break;
+            }
+
+            OrderNode& node = pool.nodes[n];
+            uint32_t take = (node.qty <=  want_qty) ? node.qty : want_qty;
+            node.qty -= take;
+            L.agg_qty -= take;
+            want_qty -= take;
+            filled += take;
+
+            if (node.qty == 0) {
+                L.head = node.next;
+                if (L.head == -1) L.tail = -1;
+                // remove from loc map (we need its id)
+                auto it = loc.find(node.order_id);
+                if (it != loc.end()) loc.erase(it);
+                pool.release(n);    
+                if (L.head == -1) on_level_maybe_empty(book_side, i);
+            } else {
+                // partial filled
+                break;
+            }
+        }
+        return filled;
     }
 };
