@@ -7,19 +7,22 @@
 
 int main() {
     long long center_tick = price_to_ticks(18000.00);
-    OrderBook ob(8000, center_tick, 2'000'000);
+    OrderBook ob(10'000, center_tick, 10'000'000);
+    const size_t SAMPLE_SIZE = 200'000;
     MarketDataRouterV2 router(ob);
 
     std::string path = std::filesystem::absolute("../data/mock_ticks_v2.bin").string();
     TickReplayerV2 replayer(path.c_str());
 
     size_t count = 0;
+    std::cout << std::fixed << std::setprecision(2);
+    std::printf("Sampling every %ld\n", SAMPLE_SIZE);
+
     replayer.replay([&](const TickEventV2& tick) {
         router.on_tick(tick);
 
-        if (++count % 200'000 == 0) {
+        if (++count % SAMPLE_SIZE == 0) {
             double bp, ap; uint32_t bq, aq;
-
             if (ob.best_bid(bp, bq)) {
                 std::cout << "[TOP] bid " << bp << " x " << bq;
             } else {
@@ -34,6 +37,6 @@ int main() {
         }
     });
     
-    std::cout << "Replayed ticks: " << count << "\n";
+    std::cout << "Replayed ticks: " << int(count) << "\n";
     return 0;
 }

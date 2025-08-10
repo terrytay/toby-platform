@@ -6,10 +6,11 @@
 #include <deque>
 #include <string>
 #include <filesystem>
+#include <iostream>
+#include <iomanip>
 
-static inline double snap_to_tick(double px) {
-    return std::round(px * 4.0) / 4.0;
-}
+static inline long long to_ticks(double px) { return llround(px * 4.0); }
+static inline double from_ticks(long long t) { return t * 0.25; }
 
 
 int main() {
@@ -20,9 +21,9 @@ int main() {
         return 1;
     }
 
-    const size_t TOTAL = 1'000'000;
+    const size_t TOTAL = 10'000'000;
     const double MID = 18000.00;
-    const int SPAN = 80; // =/- 80 ticks
+    const int SPAN = 400; // =/- 400 ticks
     uint64_t ts = 1'700'000'000'000'000'000ULL; 
 
     std::vector<TickEventV2> buffer;
@@ -40,16 +41,21 @@ int main() {
         int dice = std::rand() % 100;
         
         if (dice < 55) { // ~55% limit orders
-            int off = (std::rand() % (2*SPAN+1)) - SPAN;
-            t.price = snap_to_tick(MID + off*0.25);
-            t.type = (std::rand() & 1) ? 1 : 2; // 1=BID, 2=ASK
+            long long mid_ticks = to_ticks(MID);
+            long long off = (std::rand() % (2*SPAN+1)) - SPAN; // integer ticks
+            long long px_ticks = mid_ticks + off;
+            t.price = from_ticks(px_ticks);
+
+            t.type = (t.price <= MID) ? 1 : 2; // 1=BID, 2=ASK
             t.order_id = next_oid++;
             recent_ids.push_back(t.order_id);
             if (recent_ids.size() > RECENT_MAX) recent_ids.pop_front();
         } else if (dice < 75) { // ~25% market orders
             bool sell = std::rand() & 1;
             t.type = sell ? 3 : 0; // 3=MARKETSELL, 0=MARKETBUY
-            t.price = MID; // ignored by router for demo
+            long long mid_ticks = to_ticks(MID);
+            t.price = from_ticks(mid_ticks);
+
             t.order_id = 0; // TODO: need to still keep track of order id?? for logging??
         } else {
             if (!recent_ids.empty()) {
@@ -63,8 +69,11 @@ int main() {
                 recent_ids.pop_back();
             } else {
                 // fallback to add if nth to cancel
-                int off = (std::rand() % (2*SPAN+1)) - SPAN;
-                t.price = snap_to_tick(MID + off*0.25);
+                long long mid_ticks = to_ticks(MID);
+                long long off = (std::rand() % (2*SPAN+1)) - SPAN; // integer ticks
+                long long px_ticks = mid_ticks + off;
+                t.price = from_ticks(px_ticks);
+
                 t.type = (std::rand() & 1) ? 1 : 2; // 1=BID, 2=ASK
                 t.order_id = next_oid++;
                 recent_ids.push_back(t.order_id);
@@ -85,6 +94,6 @@ int main() {
     }
 
     std::fclose(out);
-    std::puts("Done writing ticks!");
+    std::printf("Done writing %ld ticks!", TOTAL);
     return 0;
 }
