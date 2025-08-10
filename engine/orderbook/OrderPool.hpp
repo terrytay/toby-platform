@@ -25,6 +25,10 @@ struct OrderPool {
     }
 
     int32_t alloc() {
+        if (free_head == -1) {
+            std::fprintf(stderr, "[FATAL] OrderPool exhausted. Increase max_orders or fix release path.\n");
+            std::abort();
+        }
         int32_t id = free_head; // assume capacity is sufficient for now
         free_head = nodes[id].next;
         nodes[id].next = -1;
@@ -32,6 +36,10 @@ struct OrderPool {
     }
 
     void release(int32_t id) {
+        if (id < 0 || id >= (int)nodes.size()) {
+            std::fprintf(stderr, "[FATAL] release(id=%d) out of range. Corrupted node index.\n", id);
+            std::abort();
+        }
         nodes[id].next = free_head;
         free_head = id;
     }

@@ -78,11 +78,14 @@ struct OrderBook {
 
         // If price far outside, recenter around requested idx
         // Snap so requested idx ends up at half-span (middle)
-        recenter(s, idx);   // this will adjust indices so old->new mapping is consistent
+        // recenter(s, idx);   // this will adjust indices so old->new mapping is consistent
         // After recenter, recompute idx relative to new center
         if (!lad.in_range(idx)) {
+            static size_t dropped=0;
+            if ((++dropped % 10000) == 1) std::fprintf(stderr, "[WARN] drop add: idx=%d out of range\n", idx);
+            return;
             // If still out of range (extreme move), clamp
-            idx = std::min(std::max(idx, 0), (int)lad.levels.size()-1);
+            // idx = std::min(std::max(idx, 0), (int)lad.levels.size()-1);
         }
     }
 
@@ -167,13 +170,32 @@ struct OrderBook {
         if (it == loc.end()) return false;
 
         OrderLoc ol = it->second;
+        if (ol.idx < 0 || ol.idx >= (int)side[ol.side].levels.size()) {
+             // stale location entry — treat as already gone
+            loc.erase(it);
+            return false;
+        }
+
         Level& L = side[ol.side].levels[ol.idx];
         OrderNode& cur = pool.nodes[ol.node];
         int32_t next = cur.next;
         
-        if (ol.prev == - 1) L.head = next;
-        else pool.nodes[ol.prev].next = next;
-        if (L.tail == ol.node) L.tail = ol.prev;
+        if (ol.prev == - 1) {
+            L.head = next;
+            if (L.head == -1) L.tail = -1;
+            if (next != -1) {
+                auto itn = loc.find(pool.nodes[next].order_id);
+                if (itn != loc.end()) itn->second.prev = -1;
+            }
+        } else {
+            pool.nodes[ol.prev].next = next;
+            if (L.tail == ol.node) L.tail = ol.prev;
+            if (next != -1) {
+                auto itn = loc.find(pool.nodes[next].order_id);
+                if (itn != loc.end()) itn->second.prev = ol.prev;
+            }
+        }
+  
         
         if (cur.qty <= L.agg_qty) L.agg_qty -=  cur.qty;
         else L.agg_qty = 0;
@@ -215,14 +237,16 @@ struct OrderBook {
         while (want_qty > 0) {
             int i = best_idx[book_side];
             if (i < 0) break; // no liquidity
+
             Level& L = side[book_side].levels[i];
+
+            if (L.head == -1) {
+                on_level_maybe_empty(book_side, i);
+                break;
+            }     
 
             // pop or partial-fill from head
             int32_t n = L.head;
-            if (n == -1) {
-                on_level_maybe_empty(book_side, i);
-                break;
-            }
 
             OrderNode& node = pool.nodes[n];
             uint32_t take = (node.qty <=  want_qty) ? node.qty : want_qty;
@@ -232,12 +256,20 @@ struct OrderBook {
             filled += take;
 
             if (node.qty == 0) {
+                int32_t next = node.next;
                 L.head = node.next;
                 if (L.head == -1) L.tail = -1;
+
+                if (next != -1) {
+                    auto itn = loc.find(pool.nodes[next].order_id);
+                    if (itn != loc.end()) itn->second.prev = -1;
+                }
+
                 // remove from loc map (we need its id)
                 auto it = loc.find(node.order_id);
                 if (it != loc.end()) loc.erase(it);
                 pool.release(n);    
+
                 if (L.head == -1) on_level_maybe_empty(book_side, i);
             } else {
                 // partial filled
