@@ -9,9 +9,9 @@
 TickEvent generateTick(size_t i) {
     TickEvent tick;
     tick.timestamp_ns = 1650000000000000000ULL + i * 1000;
-    tick.price = 4200.0 + (std::rand() % 100) / 10.0;
+    tick.price = 4200.0 + (std::rand() % 100);
     tick.size = (std::rand() % 5) + 1;
-    tick.type = (std::rand() & 3);
+    tick.type = (std::rand() % 4);
     return tick;
 }
 

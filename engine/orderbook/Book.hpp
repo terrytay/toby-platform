@@ -38,9 +38,52 @@ struct OrderBook {
         loc.reserve(max_orders); // reduce rehash jitters
     }
 
-    // TODO: real recenter; for now assuming in range
+    // TODO: Revisit this, as dropping prices too far away is not acceptable. Need to consider during high volatility sessions??
+    inline void recenter(uint8_t s, int new_center_idx) {
+    // Idx:  0   1   2   3   4   5   6   7   8
+    // Px:  96  97  98  99 [100] 101 102 103 104
+    // Best price drifts to 103 → that’s offset +3 ticks from center → shift = +3.
+    // want to make index 4 = 103 now.
+
+    Ladder& lad = side[s];
+    const int shift = new_center_idx - lad.half_span;     // how far actual best moved from the middle
+    if (shift == 0) return;
+
+    const int W = (int)lad.levels.size();        // total window size
+
+    // Build new vector and map old indices to new ones
+    std::vector<Level> newLevels(W);
+    for (int old = 0; old < W; ++old) {
+        int newIdx = old - shift;
+        if (newIdx >= 0 && newIdx < W) {
+            newLevels[newIdx] = lad.levels[old];
+        } else {
+            // dropped out-of-window: nothing to copy (rare)
+        }
+    }
+    lad.levels.swap(newLevels);
+
+    // Update center tick to reflect the shift
+    lad.center_tick += shift;
+
+    // Fix best pointer if needed
+    if (best_idx[s] != -1) {
+        int newBest = best_idx[s] - shift;
+        best_idx[s] = (newBest >= 0 && newBest < W) ? newBest : -1;
+    }
+}
     inline void ensure_index_in_range(uint8_t s, int& idx) {
-        if (side[s].in_range(idx)) return;
+        Ladder& lad = side[s];
+        if (lad.in_range(idx)) return;
+
+        // If price far outside, recenter around requested idx
+        // Snap so requested idx ends up at half-span (middle)
+        recenter(s, idx);   // this will adjust indices so old->new mapping is consistent
+        // After recenter, recompute idx relative to new center
+        if (!lad.in_range(idx)) {
+            // If still out of range (extreme move), clamp
+            idx = std::min(std::max(idx, 0), (int)lad.levels.size()-1);
+        }
     }
 
     inline void on_level_become_nonempty(uint8_t s, int idx) {
